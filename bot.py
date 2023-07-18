@@ -1,12 +1,11 @@
 import logging
 
 from aiogram import Bot, Dispatcher, executor, types
-from aiogram.dispatcher.filters import BoundFilter
 
 import api
 import conf
 
-from markups import start_markup, cat_markup, cat_help_markup
+from markups import cat_markup, cat_help_markup
 
 API_TOKEN = conf.TOKEN
 
@@ -41,51 +40,40 @@ async def send_welcome(message: types.Message):
     await bot.send_message(chat_id=message.chat.id, text=msg, reply_markup=cat_help_markup)
 
 
-@dp.message_handler(commands=['randcat', 'cat'])
+async def send_cat(message: types.Message, markup, reply=False):
+    try:
+        cat_url = api.get_cat()
+        if not reply:
+            await bot.send_photo(message.chat.id, cat_url,
+                                 reply_markup=markup)
+        else:
+            await bot.send_photo(message.chat.id, cat_url, reply_to_message_id=message.message_id,
+                                 reply_markup=markup)
+    except Exception as e:
+
+        msg = messages["error"] + f'\nerror_msg = {e}'
+        if not reply:
+            await bot.send_message(message.chat.id, msg,
+                                   reply_markup=markup)
+        else:
+            await bot.send_message(message.chat.id, msg, reply_to_message_id=message.message_id,
+                                   reply_markup=markup)
+
+
+@dp.message_handler(content_types=["text"], chat_type=["private"])
 async def cat(message: types.Message):
-    try:
-        cat_url = api.get_cat()
-        await bot.send_photo(message.chat.id, cat_url,
-                             reply_markup=cat_help_markup)
-    except Exception as e:
-
-        msg = messages["error"] + f'\nerror_msg = {e}'
-        await bot.send_message(message.chat.id, msg,
-                               reply_markup=cat_help_markup)
+    if message.text not in ['/randcat', '/cat', '/loaf']:
+        return
+    await send_cat(message, markup=cat_help_markup, reply=False)
 
 
-# filter.py
-class IsGroup(BoundFilter):
-    async def check(self, message: types.Message) -> bool:
-        return message.chat.type in (
-            types.ChatType.GROUP,
-            types.ChatType.SUPER_GROUP,
-            types.ChatType.SUPERGROUP
-        )
-
-
-@dp.message_handler(IsGroup(), commands=['randcat', 'cat', 'loaf'])
+@dp.message_handler(content_types=["text"], chat_type=["group", "supergroup"], commands=['randcat', 'cat', 'loaf'])
 async def chat_cat(message: types.Message):
-    try:
-        cat_url = api.get_cat()
-        await bot.send_photo(message.chat.id, cat_url, reply_to_message_id=message.message_id,
-                             reply_markup=cat_markup)
-    except Exception as e:
-
-        msg = messages["error"] + f'\nerror_msg = {e}'
-        await bot.send_message(message.chat.id, msg, reply_to_message_id=message.message_id,
-                               reply_markup=cat_markup)
+    await send_cat(message, markup=cat_markup, reply=True)
 
 
-@dp.message_handler(
-    lambda message: IsGroup() and (message.text in ['кот', 'коть', 'cat', 'loaf', 'булка', 'буханка', 'буханочка']))
+@dp.message_handler(content_types=["text"], chat_type=["group", "supergroup"])
 async def chat_cat_trigger(message: types.Message):
-    try:
-        cat_url = api.get_cat()
-        await bot.send_photo(message.chat.id, cat_url, reply_to_message_id=message.message_id,
-                             reply_markup=cat_markup)
-    except Exception as e:
-
-        msg = messages["error"] + f'\nerror_msg = {e}'
-        await bot.send_message(message.chat.id, msg, reply_to_message_id=message.message_id,
-                               reply_markup=cat_markup)
+    if message.text not in ['кот', 'коть', 'cat', 'loaf', 'булка', 'буханка', 'буханочка', 'хлебушек']:
+        return
+    await send_cat(message, markup=cat_markup, reply=False)
