@@ -17,7 +17,6 @@ def get_cat() -> str:
 
     data: dict = json.loads(resp.text)[0]   # json.loads -> [{response1}] it's list with dict inside
 
-    print(data)
     cat_url = data['url']
 
     return cat_url
