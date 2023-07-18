@@ -60,6 +60,7 @@ class IsGroup(BoundFilter):
         return message.chat.type in (
             types.ChatType.GROUP,
             types.ChatType.SUPER_GROUP,
+            types.ChatType.SUPERGROUP
         )
 
 
