@@ -74,6 +74,7 @@ async def chat_cat(message: types.Message):
 
 @dp.message_handler(content_types=["text"], chat_type=["group", "supergroup"])
 async def chat_cat_trigger(message: types.Message):
-    if message.text not in ['кот', 'коть', 'cat', 'loaf', 'булка', 'буханка', 'буханочка', 'хлебушек']:
+    if message.text.lower() not in ['кот', 'коть', 'cat', 'loaf', 'булка', 'буханка', 'буханочка', 'хлебушек',
+                            'хлеб', 'хлэб', 'хлеботело', 'no хлеботело', 'no хлеботела']:
         return
     await send_cat(message, markup=cat_markup, reply=False)
